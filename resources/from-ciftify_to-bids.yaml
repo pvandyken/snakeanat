@@ -1,0 +1,226 @@
+maps:
+- root: 
+  - MNINonLinear/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  - MNINonLinear/fsaverage_LR{den}/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  all:
+    subject: "{subject}"
+    datatype: anat
+    space: fsLR
+  comps:
+    aparc.DKTatlas.{den,[0-9]+k}_fs_LR.{ext}:
+      bids:
+        den: "{den}"
+        atlas: dkt
+        suffix: dparc.{ext}
+
+    # Mesh registration distortions
+    "{measure,((Areal|Edge)Distortion)}_{desc}.{den}_fs_LR.{ext}":
+      - map:
+          measure:
+            ArealDistortion: arealDistortion
+            EdgeDistortion: edgeDistortion
+        bids:
+          den: "{den}"
+          desc: "{desc}"
+          suffix: "{measure}.{ext}"
+
+    # measures
+    "{measure,(curvature|sulc|[tT]hickness)}.{den}_fs_LR.{ext}":
+      map:
+        measure:
+          curvature: curv
+          Thickness: thickness
+      bids:
+        den: "{den}"
+        suffix: "{measure}.{ext}"
+
+
+    # surfaces
+    "{hem}.{surf,(flat|pial|midthickness|white|inflated|very_inflated|sphere)}.{den}_fs_LR.{ext}":
+      - map:
+          surf:
+            very_inflated: vinflated
+            white: wm
+        bids:
+          den: "{den}"
+          hemi: "{hem}"
+          suffix: "{surf}.{ext}"
+
+
+
+# Native space
+- root: 
+  - MNINonLinear/Native/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  all:
+    subject: "{subject}"
+    datatype: anat
+    space: fsnative
+  comps:
+    aparc.DKTatlas.native.{ext}:
+      bids:
+        atlas: dkt
+        suffix: dparc.{ext}
+
+# Mesh registration distortions
+    "{measure,((Areal|Edge)Distortion)}_{desc}.native.{ext}":
+      - map:
+          measure:
+            ArealDistortion: arealDistortion
+            EdgeDistortion: edgeDistortion
+        bids:
+          desc: "{desc}"
+          suffix: "{measure}.{ext}"
+
+
+# measures
+    "{measure,(curvature|sulc|[tT]hickness)}.native.{ext}":
+      map:
+        measure:
+          curvature: curv
+          Thickness: thickness
+      bids:
+        suffix: "{measure}.{ext}"
+
+
+# surfaces
+    ? '{hem}.{
+      surf,(flat|pial|midthickness|white|inflated|very_inflated|sphere)
+      }{:\.?}{desc,\w*}{:\.?}{LR,(reg_LR)?}.native.{ext}'
+    : - map:
+          surf:
+            very_inflated: vinflated
+            white: wm
+        bids:
+          hemi: "{hem}"
+          desc: "{desc}"
+          suffix: "{surf}.{ext}"
+        conditions:
+        - when:
+            LR: reg_LR
+          bids:
+            space: fsaverage
+            desc: LR
+        - when:
+            desc: reg 
+          bids:
+            space: fsaverage
+            desc: null
+        - bids:
+            desc: null
+
+
+
+# Structural preprocessed
+## MNI
+- root:
+  - MNINonLinear/
+  all:
+    subject: "{subject}"
+    datatype: anat
+    space: MNI152NLin6ASym
+  comps:
+    aparc+aseg.{ext}:
+      bids:
+        atlas: dkt
+        suffix: dparc.{ext}
+    brainmask_fs.{ext}:
+      bids:
+        suffix: mask.{ext}
+    wmparc.{ext}:
+      bids:
+        desc: wmparc
+        suffix: dparc.{ext}
+    "T1w.{ext,nii.*}":
+      bids:
+        desc: preproc
+        suffix: "T1w.{ext}"
+
+## Native
+- root:
+  - T1w/
+  all:
+    subject: "{subject}"
+    datatype: anat
+    space: T1w
+  comps:
+    aparc+aseg.{ext}:
+      bids:
+        atlas: dkt
+        suffix: dparc.{ext}
+    brainmask_fs.{ext}:
+      bids:
+        suffix: mask.{ext}
+    wmparc.{ext}:
+      bids:
+        desc: wmparc
+        suffix: dparc.{ext}
+    "T1w.{ext}":
+      bids:
+        desc: preproc
+        suffix: "T1w.{ext}"
+
+# Native surfaces
+## fsLR
+- root: 
+  - T1w/fsaverage_LR{den}/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  all:
+    subject: "{subject}"
+    datatype: anat
+    space: T1wLR
+  comps:
+    # surfaces
+    "{hem}.{surf,(pial|midthickness|white|inflated|very_inflated|sphere)}.{den}_fs_LR.{ext}":
+      - map:
+          surf:
+            very_inflated: vinflated
+            white: wm
+        bids:
+          den: "{den}"
+          hemi: "{hem}"
+          suffix: "{surf}.{ext}"
+
+## Native
+- root:
+  - T1w/Native/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  all:
+    subject: "{subject}"
+    datatype: anat
+    space: T1w
+  comps:
+    "{hem}.{surf,(flat|pial|midthickness|white|inflated|very_inflated)}.native.{ext}":
+      - map:
+          surf:
+            very_inflated: vinflated
+            white: wm
+        bids:
+          hemi: "{hem}"
+          suffix: "{surf}.{ext}"
+    # "native.wb.spec":
+    #   bids:
+    #     suffix: "wb.spec"
+
+# Transforms
+
+- root:
+  - MNINonLinear/xfms/
+  all:
+    subject: "{subject}"
+    datatype: xfm
+    mode: image
+  comps:
+    Standard2T1w_warp_noaffine.{ext}:
+      bids:
+        from: MNI152NLin6Asym
+        to: T1w
+        suffix: xfm.{ext}
+    T1w2Standard_warp_noaffine.{ext}:
+      bids:
+        to: MNI152NLin6Asym
+        from: T1w
+        suffix: xfm.{ext}
+    T1w2StandardLinear.{ext}:
+      bids:
+        from: T1w
+        to: MNI152NLin6Asym
+        suffix: xfm.{ext}
+
