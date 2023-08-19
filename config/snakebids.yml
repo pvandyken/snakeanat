@@ -76,6 +76,6 @@ parse_args:
 
 #singularity containers
 containers:
-    fastsurfer: 'docker://deepmi/fastsurfer:gpu-v2.0.4'
+    fastsurfer: 'docker://deepmi/fastsurfer:gpu-v2.0.4' 
     ciftify: 'docker://tigrlab/fmriprep_ciftify:v1.3.2-2.3.3'
     autotop: 'docker://khanlab/autotop_deps:v0.4.1'

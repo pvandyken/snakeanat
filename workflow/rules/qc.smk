@@ -8,7 +8,7 @@ rule ciftify_vis:
         )
     benchmark: out/f"code/benchmark/ciftify_vis/{uid}.tsv"
     log: out/f"code/log/ciftify_vis/{uid}.log"
-    # container: config["containers"]["ciftify"]
+    container: config["containers"]["ciftify"]
     resources:
         runtime=2,
         mem_mb=2000,
@@ -20,7 +20,6 @@ rule ciftify_vis:
     group: 'ciftify'
     shell:
         """
-        singularity exec /project/6050199/knavynde/containers/uris/docker/tigrlab/fmriprep_ciftify/v1.3.2-2.3.3.sif \\
         cifti_vis_recon_all subject {params.sid} \\
             --qcdir {params.qc_dir} --ciftify-work-dir {params.sd} \\
             &> {log}
@@ -34,7 +33,7 @@ rule ciftify_vis_group:
         touch(sourcedata / "group_qc")
     benchmark: out/f"code/benchmark/ciftify_vis_group/log.tsv"
     log: out/f"code/log/ciftify_vis_group/log.log"
-    # container: config["containers"]["ciftify"]
+    container: config["containers"]["ciftify"]
     resources:
         runtime=2,
         mem_mb=2000,
@@ -44,7 +43,6 @@ rule ciftify_vis_group:
         qc_dir=lambda wcards, input: Path(input[0]).parent,
     shell:
         """
-        singularity exec /project/6050199/knavynde/containers/uris/docker/tigrlab/fmriprep_ciftify/v1.3.2-2.3.3.sif \\
         cifti_vis_recon_all index \\
             --qcdir {params.qc_dir} --ciftify-work-dir {params.sd} \\
             --debug &> {log}
