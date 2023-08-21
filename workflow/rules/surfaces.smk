@@ -39,12 +39,12 @@ rule fastsurfer_surf:
     container: config["containers"]["fastsurfer"]
     resources:
         runtime=150,
-        mem_mb=20000,
+        mem_mb=10000,
     params:
         fs_license=os.environ.get('FS_LICENSE',config["fs_license"]),
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
-    threads: 8
+    threads: 4
     group: 'fastsurfer_surf'
     shell:
         """
@@ -59,7 +59,7 @@ rule fastsurfer_surf:
         done
         /fastsurfer/run_fastsurfer.sh --fs_license {params.fs_license} \\
             --t1 {input.t1} --sid {params.sid} --sd {params.sd} \\
-            --surf_only --parallel --threads {threads} &> {log}
+            --surf_only --threads {threads} &> {log}
         """
 
 rule ciftify:
