@@ -65,6 +65,7 @@ rule fastsurfer_surf:
 rule ciftify:
     input:
         fs_dir=rules.fastsurfer_surf.output.fs_dir,
+        container=config["containers"]["ciftify_abspath"]
     output:
         directory(
             sourcedata / "ciftify" / Path(bids(**inputs.subj_wildcards)).name
@@ -75,7 +76,6 @@ rule ciftify:
         runtime=240,
         mem_mb=10000,
     threads: 4
-    container: config["containers"]["ciftify"]
     params:
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
@@ -84,7 +84,7 @@ rule ciftify:
     group: 'ciftify'
     shell:
         """
-        ciftify_recon_all {params.sid} \\
+        singularity exec {input.container} ciftify_recon_all {params.sid} \\
             --ciftify-work-dir {params.sd} --fs-subjects-dir {params.fs_dir}  \\
             --fs-license {params.fs_license} --n_cpus {threads} --resample-to-T1w32k \\
             --debug &> {log}
