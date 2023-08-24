@@ -20,7 +20,7 @@ rule ciftify_vis:
     group: 'ciftify'
     shell:
         """
-        singularity exec {input.container} ciftify_recon_all {params.sid} \\
+        singularity exec {input.container} \\
         cifti_vis_recon_all subject {params.sid} \\
             --qcdir {params.qc_dir} --ciftify-work-dir {params.sd} \\
             &> {log}
@@ -30,6 +30,7 @@ rule ciftify_vis:
 rule ciftify_vis_group:
     input:
         inputs["t1w"].expand(rules.ciftify_vis.output),
+        container=config["containers"]["ciftify_abspath"]
     output:
         touch(sourcedata / "group_qc")
     benchmark: out/f"code/benchmark/ciftify_vis_group/log.tsv"
@@ -44,6 +45,7 @@ rule ciftify_vis_group:
         qc_dir=lambda wcards, input: Path(input[0]).parent,
     shell:
         """
+        singularity exec {input.container} \\
         cifti_vis_recon_all index \\
             --qcdir {params.qc_dir} --ciftify-work-dir {params.sd} \\
             --debug &> {log}
