@@ -1,19 +1,20 @@
 
 rule fastsurfer_seg:
-    input: rules.get_template_t1.output
+    input: 
+        t1=rules.get_template_t1.output,
     output:
         directory(
             sourcedata / "fastsurfer" / Path(bids(**inputs.subj_wildcards)).name
         )
     benchmark: out/f"code/benchmark/fastsurfer/{uid}.tsv"
     log: out/f"code/log/fastsurfer/{uid}.log"
-    container: config["containers"]["fastsurfer"]
     resources:
         gpu=1,
-        runtime=3,
+        runtime=15,
         mem_mb=10000,
+    container: config["containers"]["fastsurfer"],
     params:
-        fs_license=config["fs_license"],
+        fs_license=os.environ.get('FS_LICENSE',config["fs_license"]),
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
     threads: 1
@@ -21,7 +22,7 @@ rule fastsurfer_seg:
     shell:
         """
         /fastsurfer/run_fastsurfer.sh --fs_license {params.fs_license} \\
-            --t1 {input} --sid {params.sid} --sd {params.sd} \\
+            --t1 {input.t1} --sid {params.sid} --sd {params.sd} \\
             --seg_only &> {log}
         """
 
@@ -30,7 +31,7 @@ rule fastsurfer_surf:
         t1=rules.get_template_t1.output,
         seg=rules.fastsurfer_seg.output,
     output:
-        directory(
+        fs_dir=directory(
             sourcedata / "fastsurfer_surf" / Path(bids(**inputs.subj_wildcards)).name
         )
     benchmark: out/f"code/benchmark/fastsurfer_surf/{uid}.tsv"
@@ -40,7 +41,7 @@ rule fastsurfer_surf:
         runtime=150,
         mem_mb=10000,
     params:
-        fs_license=config["fs_license"],
+        fs_license=os.environ.get('FS_LICENSE',config["fs_license"]),
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
     threads: 4
@@ -63,14 +64,14 @@ rule fastsurfer_surf:
 
 rule ciftify:
     input:
-        rules.fastsurfer_surf.output[0],
+        fs_dir=rules.fastsurfer_surf.output.fs_dir,
+        container=config["containers"]["ciftify_abspath"]
     output:
         directory(
             sourcedata / "ciftify" / Path(bids(**inputs.subj_wildcards)).name
         )
     benchmark: out/f"code/benchmark/ciftify/{uid}.tsv"
     log: out/f"code/log/ciftify/{uid}.log"
-    # container: config["containers"]["ciftify"]
     resources:
         runtime=240,
         mem_mb=10000,
@@ -79,12 +80,11 @@ rule ciftify:
         sid=lambda wcards, output: Path(output[0]).name,
         sd=lambda wcards, output: Path(output[0]).parent,
         fs_dir=lambda wcards, input: Path(input[0]).parent,
-        fs_license=config["fs_license"],
+        fs_license=os.environ.get('FS_LICENSE',config["fs_license"]),
     group: 'ciftify'
     shell:
         """
-        singularity exec /project/6050199/knavynde/containers/uris/docker/tigrlab/fmriprep_ciftify/v1.3.2-2.3.3.sif \\
-        ciftify_recon_all {params.sid} \\
+        singularity exec {input.container} ciftify_recon_all {params.sid} \\
             --ciftify-work-dir {params.sd} --fs-subjects-dir {params.fs_dir}  \\
             --fs-license {params.fs_license} --n_cpus {threads} --resample-to-T1w32k \\
             --debug &> {log}

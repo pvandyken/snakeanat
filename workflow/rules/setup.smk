@@ -25,21 +25,27 @@ if "t1w_echo" in inputs and "t1w" in inputs and (
 
 out = Path(config["output_dir"])
 uid = Path(bids(**inputs.subj_wildcards)).name
-work = Path(os.environ.get("SLURM_TMPDIR", tempfile.mkdtemp(prefix="snakeanat.")))
+work = Path(config["output_dir"]) / 'work'
+tmp = Path(os.environ.get("SLURM_TMPDIR", tempfile.mkdtemp(prefix="snakeanat.")))
 
 boost = Boost(work, logger)
+
+# is there a better fallback if PIP_WHEEL_DIR isn't set? maybe not define a wheelhouse
+# at all?
+wheelhouse = os.environ.get('PIP_WHEEL_DIR','~/projects/ctb-akhanf/knavynde/wheels/')
+
 pyscript = Pyscript(workflow.basedir)
 pathxf_venv = PipEnv(
-    root=work,
-    flags="--no-index -f ~/projects/ctb-akhanf/knavynde/wheels/",
+    root=tmp,
+    flags=f"--no-index -f {wheelhouse}",
     packages=[
         "pathxf==0.0.3.dev1+91cb9eb"
     ]
 )
 
 simpleitk_env = PipEnv(
-    root=work,
-    flags="--no-index -f ~/projects/ctb-akhanf/knavynde/wheels/",
+    root=tmp,
+    flags=f"--no-index -f {wheelhouse}",
     packages=[
         "SimpleItk==2.2.1",
         "snakeboost",
