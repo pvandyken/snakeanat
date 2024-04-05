@@ -72,10 +72,21 @@ parse_args:
   --fs_license:
     help: Path to the freesurfer license file
 
+  --from-dwi:
+    help: >
+      Use a diffusion scan as input. SynthSR will be used to make a synthetic T1w image
+      based on the average b0 volume in the diffusion scan.
+    action: store_true
+    default: false
+
+
 
 
 #singularity containers
 containers:
-    fastsurfer: 'docker://deepmi/fastsurfer:gpu-v2.0.4'
-    ciftify: 'docker://tigrlab/fmriprep_ciftify:v1.3.2-2.3.3'
-    autotop: 'docker://khanlab/autotop_deps:v0.4.1'
+  fastsurfer: 'docker://deepmi/fastsurfer:gpu-v2.0.4'
+  ciftify: 'docker://tigrlab/fmriprep_ciftify:v1.3.2-2.3.3'
+  autotop: 'docker://khanlab/autotop_deps:v0.4.1'
+  python: 'docker://khanlab/pythondeps-snakedwi:v0.2.0'
+  synthsr: 'docker://akhanf/synthsr:main'
+  itksnap: 'docker://khanlab/itksnap:latest'

@@ -1,3 +1,4 @@
-fastsurfer_seg=120
-fastsurfer_surf=24
-ciftify=24
+fastsurfer_seg=30
+fastsurfer_surf=12
+ciftify=6
+finish=1000

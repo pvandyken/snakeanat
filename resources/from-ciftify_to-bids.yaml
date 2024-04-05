@@ -1,20 +1,20 @@
 maps:
 - root: 
-  - MNINonLinear/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
-  - MNINonLinear/fsaverage_LR{den}/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  - MNINonLinear/sub-{subject:[a-zA-Z0-9]+}{:[^.]*}.
+  - MNINonLinear/fsaverage_LR{den}/sub-{subject:[a-zA-Z0-9]+}{:[^.]*}.
   all:
     subject: "{subject}"
     datatype: anat
     space: fsLR
   comps:
-    aparc.DKTatlas.{den,[0-9]+k}_fs_LR.{ext}:
+    aparc.DKTatlas.{den:[0-9]+k}_fs_LR.{ext}:
       bids:
         den: "{den}"
         atlas: dkt
         suffix: dparc.{ext}
 
     # Mesh registration distortions
-    "{measure,((Areal|Edge)Distortion)}_{desc}.{den}_fs_LR.{ext}":
+    "{measure:((Areal|Edge)Distortion)}_{desc}.{den}_fs_LR.{ext}":
       - map:
           measure:
             ArealDistortion: arealDistortion
@@ -25,7 +25,7 @@ maps:
           suffix: "{measure}.{ext}"
 
     # measures
-    "{measure,(curvature|sulc|[tT]hickness)}.{den}_fs_LR.{ext}":
+    "{measure:(curvature|sulc|[tT]hickness)}.{den}_fs_LR.{ext}":
       map:
         measure:
           curvature: curv
@@ -36,7 +36,7 @@ maps:
 
 
     # surfaces
-    "{hem}.{surf,(flat|pial|midthickness|white|inflated|very_inflated|sphere)}.{den}_fs_LR.{ext}":
+    "{hem}.{surf:(flat|pial|midthickness|white|inflated|very_inflated|sphere)}.{den}_fs_LR.{ext}":
       - map:
           surf:
             very_inflated: vinflated
@@ -50,7 +50,7 @@ maps:
 
 # Native space
 - root: 
-  - MNINonLinear/Native/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  - MNINonLinear/Native/sub-{subject:[a-zA-Z0-9]+}{:[^.]*}.
   all:
     subject: "{subject}"
     datatype: anat
@@ -62,7 +62,7 @@ maps:
         suffix: dparc.{ext}
 
 # Mesh registration distortions
-    "{measure,((Areal|Edge)Distortion)}_{desc}.native.{ext}":
+    "{measure:((Areal|Edge)Distortion)}_{desc}.native.{ext}":
       - map:
           measure:
             ArealDistortion: arealDistortion
@@ -73,7 +73,7 @@ maps:
 
 
 # measures
-    "{measure,(curvature|sulc|[tT]hickness)}.native.{ext}":
+    "{measure:(curvature|sulc|[tT]hickness)}.native.{ext}":
       map:
         measure:
           curvature: curv
@@ -84,8 +84,8 @@ maps:
 
 # surfaces
     ? '{hem}.{
-      surf,(flat|pial|midthickness|white|inflated|very_inflated|sphere)
-      }{:\.?}{desc,\w*}{:\.?}{LR,(reg_LR)?}.native.{ext}'
+      surf:(flat|pial|midthickness|white|inflated|very_inflated|sphere)
+      }{:\.?}{desc:\w*}{:\.?}{LR:(reg_LR)?}.native.{ext}'
     : - map:
           surf:
             very_inflated: vinflated
@@ -130,7 +130,7 @@ maps:
       bids:
         desc: wmparc
         suffix: dparc.{ext}
-    "T1w.{ext,nii.*}":
+    "T1w.{ext:nii.*}":
       bids:
         desc: preproc
         suffix: "T1w.{ext}"
@@ -162,14 +162,14 @@ maps:
 # Native surfaces
 ## fsLR
 - root: 
-  - T1w/fsaverage_LR{den}/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  - T1w/fsaverage_LR{den}/sub-{subject:[a-zA-Z0-9]+}{:[^.]*}.
   all:
     subject: "{subject}"
     datatype: anat
     space: T1wLR
   comps:
     # surfaces
-    "{hem}.{surf,(pial|midthickness|white|inflated|very_inflated|sphere)}.{den}_fs_LR.{ext}":
+    "{hem}.{surf:(pial|midthickness|white|inflated|very_inflated|sphere)}.{den}_fs_LR.{ext}":
       - map:
           surf:
             very_inflated: vinflated
@@ -181,13 +181,13 @@ maps:
 
 ## Native
 - root:
-  - T1w/Native/sub-{subject,[a-zA-Z0-9]+}{:[^.]*}.
+  - T1w/Native/sub-{subject:[a-zA-Z0-9]+}{:[^.]*}.
   all:
     subject: "{subject}"
     datatype: anat
     space: T1w
   comps:
-    "{hem}.{surf,(flat|pial|midthickness|white|inflated|very_inflated)}.native.{ext}":
+    "{hem}.{surf:(flat|pial|midthickness|white|inflated|very_inflated)}.native.{ext}":
       - map:
           surf:
             very_inflated: vinflated
