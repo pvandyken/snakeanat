@@ -1,13 +1,13 @@
 
 configfile: workflow.source_path('../config/snakebids.yml')
 
-localrules: participant, bidsify, group
-
+localrules: participant,  group 
 resource_scopes:
     gpu="local"
 
 include: "rules/setup.smk"
 include: "rules/t1_template.smk"
+include: "rules/synthsr.smk"
 include: "rules/surfaces.smk"
 include: "rules/transforms.smk"
 include: "rules/qc.smk"
@@ -17,7 +17,7 @@ rule participant:
     input:
         inputs["t1w"].expand([
             rules.ciftify_vis.output[0],
-            rules.bidsify.output[0],
+            *rules.bidsify.output,
             rules.convert_transforms_to_h5.output[0],
         ]),
     default_target: True

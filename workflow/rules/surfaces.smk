@@ -1,17 +1,21 @@
+def _get_fastsurfer_source():
+    if config["from_dwi"]:
+        return rules.reslice_synthSR_b0.output["synthsr"]
+    return rules.get_template_t1.output
 
 rule fastsurfer_seg:
-    input: rules.get_template_t1.output
+    input: _get_fastsurfer_source()
     output:
         directory(
             sourcedata / "fastsurfer" / Path(bids(**inputs.subj_wildcards)).name
         )
     benchmark: out/f"code/benchmark/fastsurfer/{uid}.tsv"
     log: out/f"code/log/fastsurfer/{uid}.log"
-    container: config["containers"]["fastsurfer"]
+    # container: config["containers"]["fastsurfer"]
     resources:
         gpu=1,
-        runtime=3,
-        mem_mb=10000,
+        runtime=5,
+        mem_mb=15000,
     params:
         fs_license=config["fs_license"],
         sid=lambda wcards, output: Path(output[0]).name,
@@ -20,46 +24,54 @@ rule fastsurfer_seg:
     group: 'fastsurfer_seg'
     shell:
         """
+        singularity exec --nv /project/6050199/knavynde/containers/uris/docker/deepmi/fastsurfer/gpu-v2.0.4.sif \\
         /fastsurfer/run_fastsurfer.sh --fs_license {params.fs_license} \\
             --t1 {input} --sid {params.sid} --sd {params.sd} \\
             --seg_only &> {log}
         """
 
+
+
 rule fastsurfer_surf:
     input:
-        t1=rules.get_template_t1.output,
+        t1=_get_fastsurfer_source(),
         seg=rules.fastsurfer_seg.output,
-    output:
-        directory(
-            sourcedata / "fastsurfer_surf" / Path(bids(**inputs.subj_wildcards)).name
-        )
+    output: 
+        directory(sourcedata / "fastsurfer_surf" / Path(bids(**inputs.subj_wildcards)).name)
     benchmark: out/f"code/benchmark/fastsurfer_surf/{uid}.tsv"
     log: out/f"code/log/fastsurfer_surf/{uid}.log"
-    container: config["containers"]["fastsurfer"]
+    # container: config["containers"]["fastsurfer"]
     resources:
         runtime=150,
-        mem_mb=10000,
+        mem_mb=15000,
     params:
         fs_license=config["fs_license"],
-        sid=lambda wcards, output: Path(output[0]).name,
-        sd=lambda wcards, output: Path(output[0]).parent,
     threads: 4
     group: 'fastsurfer_surf'
     shell:
-        """
-        src="{input.seg}"
-        length=$(printf '%s' "$src" | wc -m)
-        for f in $(find "$src" -type f -o -type l); do
-            rel="${{f:length}}"
-            dest="{output}/$rel"
-            dir=$(dirname "$dest")
-            mkdir -p "$dir"
-            ln -s "$(realpath --relative-to "$dir" "$src/$rel")" "$dest"
-        done
-        /fastsurfer/run_fastsurfer.sh --fs_license {params.fs_license} \\
-            --t1 {input.t1} --sid {params.sid} --sd {params.sd} \\
-            --surf_only --threads {threads} &> {log}
-        """
+        (
+            """
+            cp_command () {{
+                ln -s "$(realpath --relative-to "$1" "$2/$3")" "$4"
+            }}
+            sid=$(basename {output})
+            sd=$(dirname {output})
+            src="{input.seg}"
+            length=$(printf '%s' "$src" | wc -m)
+            for f in $(find "$src" \( -type f -o -type l \) -not -name '.snakemake_timestamp'); do
+                rel="${{f:length}}"
+                dest={output}/"$rel"
+                dir=$(dirname "$dest")
+                mkdir -p "$dir"
+                cp_command "$dir" "$src" "$rel" "$dest"
+            done
+            singularity exec /project/6050199/knavynde/containers/uris/docker/deepmi/fastsurfer/gpu-v2.0.4.sif \\
+                /fastsurfer/run_fastsurfer.sh --fs_license {params.fs_license} \\
+                    --t1 {input.t1} --sid "$sid" --sd "$sd" \\
+                    --surf_only --threads {threads} &> {log}
+            """
+        )
+
 
 rule ciftify:
     input:
@@ -76,18 +88,18 @@ rule ciftify:
         mem_mb=10000,
     threads: 4
     params:
-        sid=lambda wcards, output: Path(output[0]).name,
-        sd=lambda wcards, output: Path(output[0]).parent,
-        fs_dir=lambda wcards, input: Path(input[0]).parent,
         fs_license=config["fs_license"],
     group: 'ciftify'
     shell:
         """
+        sid=$(basename {output})
+        sd=$(dirname {output})
+        fs_dir=$(dirname {input})
         singularity exec /project/6050199/knavynde/containers/uris/docker/tigrlab/fmriprep_ciftify/v1.3.2-2.3.3.sif \\
-        ciftify_recon_all {params.sid} \\
-            --ciftify-work-dir {params.sd} --fs-subjects-dir {params.fs_dir}  \\
+        ciftify_recon_all "$sid" \\
+            --ciftify-work-dir "$sd" --fs-subjects-dir "$fs_dir"  \\
             --fs-license {params.fs_license} --n_cpus {threads} --resample-to-T1w32k \\
-            --debug &> {log}
+            --debug # &> {log}
             
         """
 
@@ -150,6 +162,10 @@ rule bidsify:
         ]).format(**wcards)
     envmodules:
         'python/3.10'
+    group: "finish"
+    resources:
+        runtime=1,
+        mem_mb=500,
     shell:
         boost(
             pathxf_venv.script,

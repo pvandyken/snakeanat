@@ -17,7 +17,7 @@ rule convert_transforms_to_itk:
     resources:
         runtime=10,
         mem_mb=5000,
-    group: 'fastsurfer_seg'
+    group: "finish"
     shell:
         """
         wb_command -convert-affine \\
@@ -57,6 +57,10 @@ rule convert_transforms_to_h5:
         ),
     envmodules:
         'python/3.10'
+    group: "finish"
+    resources:
+        runtime=1,
+        mem_mb=500,
     shell:
         boost(
             simpleitk_env.script,
