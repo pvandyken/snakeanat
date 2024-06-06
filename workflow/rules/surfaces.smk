@@ -99,7 +99,7 @@ rule ciftify:
         ciftify_recon_all "$sid" \\
             --ciftify-work-dir "$sd" --fs-subjects-dir "$fs_dir"  \\
             --fs-license {params.fs_license} --n_cpus {threads} --resample-to-T1w32k \\
-            --debug # &> {log}
+            --debug &> {log}
             
         """
 
